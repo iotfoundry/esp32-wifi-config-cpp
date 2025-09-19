@@ -1,0 +1,58 @@
+name: ESP32 WiFi Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup Arduino CLI
+      uses: arduino/setup-arduino-cli@v1
+
+    - name: Install ESP32 Core
+      run: |
+        arduino-cli core update-index --additional-urls https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json
+        arduino-cli core install esp32:esp32
+
+    - name: Install Dependencies
+      run: |
+        arduino-cli lib install "WiFi"
+        arduino-cli lib install "Preferences"
+
+    - name: Compile Main Sketch
+      run: |
+        # Compile main sketch with template credentials
+        cp esp32-wifi-config/wifi_config_template.h esp32-wifi-config/wifi_config.h
+        arduino-cli compile --fqbn esp32:esp32:esp32c3 esp32-wifi-config
+
+    - name: Run Static Analysis
+      run: |
+        # Check for common issues
+        echo "Checking for hardcoded credentials..."
+        if grep -r "const char.*WIFI_SSID.*=" esp32-wifi-config/esp32-wifi-config.ino; then
+          echo "❌ Hardcoded credentials found in main file"
+          exit 1
+        else
+          echo "✅ No hardcoded credentials in main file"
+        fi
+
+        echo "Checking for proper includes..."
+        if grep -q '#include "wifi_config.h"' esp32-wifi-config/esp32-wifi-config.ino; then
+          echo "✅ Proper config include found"
+        else
+          echo "❌ Missing config include"
+          exit 1
+        fi
+
+    - name: Test Results
+      run: |
+        echo "✅ Compilation successful"
+        echo "✅ Static analysis passed"
+        echo "🎉 All tests completed successfully!"
