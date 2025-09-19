@@ -1,0 +1,17 @@
+# WiFi credentials (keep secure)
+esp32-wifi-config/wifi_config.h
+
+# Arduino IDE
+*.ino.bak
+
+# Test files
+test_sketch/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
